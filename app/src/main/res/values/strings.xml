@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ConcurrencyInKotlin2023</string>
+    <string name="news_count">Found %d News</string>
 </resources>
