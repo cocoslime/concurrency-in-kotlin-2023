@@ -92,7 +92,13 @@ class MainActivity : AppCompatActivity() {
             .filter { it.tagName == "item" }
             .map {
                 val title = it.getElementsByTagName("title").item(0).textContent
-                val summary = it.getElementsByTagName("description").item(0).textContent
+                val description = it.getElementsByTagName("description").item(0).textContent
+                val summary = if (!description.startsWith("<div") && description.contains("<div")) {
+                    description.substring(0, description.indexOf("<div"))
+                } else {
+                    description
+                }
+
                 Article(feed.name, title, summary)
             }
             .toList()
