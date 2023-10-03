@@ -3,7 +3,8 @@ package com.cocoslime.concurrencyinkotlin2023
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import androidx.core.view.isVisible
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.cocoslime.concurrencyinkotlin2023.adapter.ArticleAdapter
 import com.cocoslime.concurrencyinkotlin2023.databinding.ActivityMainBinding
 import com.cocoslime.concurrencyinkotlin2023.model.Article
 import com.cocoslime.concurrencyinkotlin2023.model.Feed
@@ -11,6 +12,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newFixedThreadPoolContext
 import org.w3c.dom.Element
@@ -34,10 +36,18 @@ class MainActivity : AppCompatActivity() {
         Feed("inv", "htt://something.wrong") //FIXME: 예외 발생을 위한 잘못된 URL
     )
 
+    private lateinit var articleAdapter: ArticleAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        articleAdapter = ArticleAdapter()
+        binding.articles.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = articleAdapter
+        }
 
         asyncLoadNews()
     }
@@ -60,14 +70,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         launch(Dispatchers.Main) {
-            binding.newsCount.text = getString(
-                R.string.news_count, articles.size.toString(), (requests.size - failedCount.get()).toString()
-            )
-
-            binding.warnings.isVisible = failedCount.get() != 0
-            binding.warnings.text = getString(
-                R.string.fail_fetch_feed, failedCount.get()
-            )
+            articleAdapter.submitList(articles)
         }
     }
 
@@ -75,6 +78,8 @@ class MainActivity : AppCompatActivity() {
         feed: Feed,
         dispatcher: CoroutineDispatcher
     ) = GlobalScope.async(dispatcher){
+        delay(500) // 네트워크 지연을 위한 임의의 딜레이
+
         val builder = factory.newDocumentBuilder()
         val xml = builder.parse(feed.url)
         val news = xml.getElementsByTagName("channel").item(0)
