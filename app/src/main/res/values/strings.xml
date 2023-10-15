@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">ConcurrencyInKotlin2023</string>
-    <string name="news_count">Found %d News</string>
+    <string name="news_count">Found %1$s News in %2$s</string>
+    <string name="fail_fetch_feed">Failed to fetch %d feeds</string>
 </resources>
