@@ -7,9 +7,23 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.cocoslime.concurrencyinkotlin2023.databinding.ItemArticleBinding
 import com.cocoslime.concurrencyinkotlin2023.model.Article
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 
-class ArticleAdapter : ListAdapter<Article, ArticleAdapter.ArticleViewHolder>(ArticleDiffCallback()) {
+interface ArticleLoader {
+    suspend fun loadMore()
+}
+
+class ArticleAdapter(
+    private val articleLoader: ArticleLoader
+) : ListAdapter<Article, ArticleAdapter.ArticleViewHolder>(ArticleDiffCallback()) {
+    private var loading = false
+
+    fun add(articles: List<Article>) {
+        submitList(currentList + articles)
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ArticleViewHolder {
         return ArticleViewHolder(
             ItemArticleBinding.inflate(
@@ -26,6 +40,15 @@ class ArticleAdapter : ListAdapter<Article, ArticleAdapter.ArticleViewHolder>(Ar
         holder.binding.feed.text = article.feedName
         holder.binding.title.text = article.title
         holder.binding.summary.text = article.summary
+
+        if (!loading && position >= itemCount - 2) {
+            loading = true
+
+            GlobalScope.launch {
+                articleLoader.loadMore()
+                loading = false
+            }
+        }
     }
 
     class ArticleViewHolder(

@@ -4,6 +4,7 @@
 - [Chapter 2. 코루틴 인 액션](https://github.com/cocoslime/concurrency-in-kotlin-2023/tree/231001-coroutine-in-action)
 - [Chapter 3. 라이프 사이클과 에러 핸들링](https://github.com/cocoslime/concurrency-in-kotlin-2023/tree/231002-lifecycle-and-error-handling)
 - [Chapter 4. 일시 중단 함수와 코루틴 컨텍스트](https://github.com/cocoslime/concurrency-in-kotlin-2023/tree/231003-suspend-function-and-context)
+- [Chapter 5. 이터레이터, 시퀀스 그리고 프로듀서](https://github.com/cocoslime/concurrency-in-kotlin-2023/tree/231012-iterator-sequence-producer)
 
 ## 책의 예제와 다른 점
 - Kotlin 버전: 1.3.71 -> 1.9.0
@@ -11,4 +12,5 @@
 - ViewBinding 사용
 - String resource 사용
 - ListAdapter 사용
-
+- launch -> GlobalScope.launch
+- 기타 등등..
