@@ -3,13 +3,16 @@ package com.cocoslime.concurrencyinkotlin2023
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import androidx.core.view.isVisible
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.cocoslime.concurrencyinkotlin2023.adapter.ArticleAdapter
 import com.cocoslime.concurrencyinkotlin2023.databinding.ActivityMainBinding
+import com.cocoslime.concurrencyinkotlin2023.model.Article
+import com.cocoslime.concurrencyinkotlin2023.model.Feed
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newFixedThreadPoolContext
 import org.w3c.dom.Element
@@ -25,31 +28,38 @@ class MainActivity : AppCompatActivity() {
     private val networkDispatcher = newFixedThreadPoolContext(2, "IO")
     private val factory = DocumentBuilderFactory.newInstance()
 
-    val feeds = listOf(
-        "https://www.npr.org/rss/rss.php?id=1001",
-        "http://rss.cnn.com/rss/edition.rss", // Ref. https://edition.cnn.com/services/rss/
-        "https://feeds.foxnews.com/foxnews/politics?format=xml",
-        "htt://something.wrong" //FIXME: 예외 발생을 위한 잘못된 URL
+    private val feeds = listOf(
+        Feed("npr", "https://www.npr.org/rss/rss.php?id=1001"),
+        // Ref. https://edition.cnn.com/services/rss/
+        Feed("cnn","http://rss.cnn.com/rss/edition.rss"),
+        Feed("fox", "https://feeds.foxnews.com/foxnews/politics?format=xml"),
+        Feed("inv", "htt://something.wrong") //FIXME: 예외 발생을 위한 잘못된 URL
     )
+
+    private lateinit var articleAdapter: ArticleAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        articleAdapter = ArticleAdapter()
+        binding.articles.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = articleAdapter
+        }
+
         asyncLoadNews()
     }
 
     private fun asyncLoadNews() = GlobalScope.launch {
-        val requests = mutableListOf<Deferred<List<String>>>()
-
-        feeds.forEach { feed ->
-            requests.add(asyncFetchHeadlines(feed, networkDispatcher))
+        val requests = feeds.map { feed ->
+            asyncFetchArticles(feed, networkDispatcher)
         }
 
         //Deferred.getCompleted() 는 experimental API 라서, await() 를 사용하는 코드로 대체함
         val failedCount = AtomicInteger(0)
-        val headLines = requests.flatMap {
+        val articles = requests.flatMap {
             try {
                 it.await()
             } catch (e: Exception) {
@@ -60,23 +70,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         launch(Dispatchers.Main) {
-            binding.newsCount.text = getString(
-                R.string.news_count, headLines.size.toString(), (requests.size - failedCount.get()).toString()
-            )
-
-            binding.warnings.isVisible = failedCount.get() != 0
-            binding.warnings.text = getString(
-                R.string.fail_fetch_feed, failedCount.get()
-            )
+            articleAdapter.submitList(articles)
         }
     }
 
-    private fun asyncFetchHeadlines(
-        feed: String,
+    private fun asyncFetchArticles(
+        feed: Feed,
         dispatcher: CoroutineDispatcher
     ) = GlobalScope.async(dispatcher){
+        delay(500) // 네트워크 지연을 위한 임의의 딜레이
+
         val builder = factory.newDocumentBuilder()
-        val xml = builder.parse(feed)
+        val xml = builder.parse(feed.url)
         val news = xml.getElementsByTagName("channel").item(0)
 
         (0 until news.childNodes.length)
@@ -86,7 +91,15 @@ class MainActivity : AppCompatActivity() {
             .map { it as Element }
             .filter { it.tagName == "item" }
             .map {
-                it.getElementsByTagName("title").item(0).textContent
+                val title = it.getElementsByTagName("title").item(0).textContent
+                val description = it.getElementsByTagName("description").item(0).textContent
+                val summary = if (!description.startsWith("<div") && description.contains("<div")) {
+                    description.substring(0, description.indexOf("<div"))
+                } else {
+                    description
+                }
+
+                Article(feed.name, title, summary)
             }
             .toList()
     }
