@@ -2,4 +2,5 @@
     <string name="app_name">ConcurrencyInKotlin2023</string>
     <string name="news_count">Found %1$s News in %2$s</string>
     <string name="fail_fetch_feed">Failed to fetch %d feeds</string>
+    <string name="no_more_news">No more news</string>
 </resources>

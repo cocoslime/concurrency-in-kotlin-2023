@@ -2,6 +2,7 @@ package com.cocoslime.concurrencyinkotlin2023
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.cocoslime.concurrencyinkotlin2023.adapter.ArticleAdapter
@@ -40,9 +41,19 @@ class MainActivity : AppCompatActivity(), ArticleLoader {
         if (!producer.isClosedForReceive) {
             val articles = producer.receive()
 
-            withContext(Dispatchers.Main) {
+            GlobalScope.launch(Dispatchers.Main) {
                 binding.progressBar.isVisible = false
                 articleAdapter.add(articles)
+            }
+        } else {
+            showToast(getString(R.string.no_more_news))
+        }
+    }
+
+    private fun showToast(msg: String?) {
+        msg?.let {
+            GlobalScope.launch(Dispatchers.Main) {
+                Toast.makeText(this@MainActivity, it, Toast.LENGTH_SHORT).show()
             }
         }
     }
