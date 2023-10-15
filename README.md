@@ -13,3 +13,4 @@
 - String resource 사용
 - ListAdapter 사용
 - launch -> GlobalScope.launch
+- 기타 등등..
