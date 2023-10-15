@@ -12,7 +12,6 @@ import com.cocoslime.concurrencyinkotlin2023.producer.ArticleProducer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity(), ArticleLoader {
     private lateinit var binding: ActivityMainBinding
