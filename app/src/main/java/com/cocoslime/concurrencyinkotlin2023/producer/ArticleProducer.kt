@@ -1,5 +1,6 @@
 package com.cocoslime.concurrencyinkotlin2023.producer
 
+import com.cocoslime.concurrencyinkotlin2023.logError
 import com.cocoslime.concurrencyinkotlin2023.model.Article
 import com.cocoslime.concurrencyinkotlin2023.model.Feed
 import kotlinx.coroutines.GlobalScope
@@ -22,8 +23,13 @@ object ArticleProducer {
     private val factory = DocumentBuilderFactory.newInstance()
     val producer = GlobalScope.produce(networkDispatcher) {
         feeds.forEach {
-            val articles = fetchArticles(it)
-            send(articles)
+            try {
+                val articles = fetchArticles(it)
+                send(articles)
+            } catch (e: Exception) {
+                //ignore Exception
+                e.logError("ArticleProducer")
+            }
         }
     }
 
